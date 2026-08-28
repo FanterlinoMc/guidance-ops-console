@@ -1,0 +1,37 @@
+/* Baseline lifted from the design prototype's <helmet> block. */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  background: #f6f5f2;
+  color: #12212f;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+}
+a {
+  color: #16375e;
+  text-decoration: none;
+}
+a:hover {
+  color: #0b2545;
+  text-decoration: underline;
+}
+button {
+  font-family: inherit;
+}
+:focus-visible {
+  outline: 2px solid #2f5480;
+  outline-offset: 2px;
+}
+table {
+  border-collapse: collapse;
+}
+::selection {
+  background: #d9e2ee;
+}

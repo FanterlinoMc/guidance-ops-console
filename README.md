@@ -1,25 +1,98 @@
-# CODING AGENTS: READ THIS FIRST
+# Guidance Ops Console
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+Operations console for Guidance Home Services — five linked screens showing what the
+website assistant captured, who each lead was routed to, what email left the system,
+and whether anyone has replied yet.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+Implemented in React + TypeScript + Vite from the Claude Design handoff in
+`project/Guidance Ops Console.dc.html` (design conversation in `chats/`).
 
-## What you should do — IMPORTANT
+**All data is fabricated demo data.** No backend, no live figures, no customer
+information.
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+## Running it
 
-**Read `project/Guidance Ops Console.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # typecheck + production build to dist/
+npm run typecheck
+```
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Screens
 
-## About the design files
+| Screen | What it answers |
+| --- | --- |
+| **Overview** | What came in, who owns it, has anyone answered. Opens with a four-step explainer of how a lead reaches a person, plus a Concierge vs. Account Executive split. |
+| **Leads** | The full register, filterable by owner / track / stage, with a key decoding the status pills and an empty state. |
+| **Lead detail** | One record end to end: captured fields, routing decision, stage history, assistant transcript, handoff email. |
+| **Handoff emails** | Two-pane log of every routing email with recipients, delivery status and the exact body that left the system. |
+| **Team & territories** | State-tile map coloured by Concierge region, region owners and load, the two desks, and the 16 uncovered states. |
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## How it is organised
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+```
+src/
+  data/leads.ts       Sample data block — regions, 24 leads, transcripts, tile grid
+  lib/routing.ts      Routing, first-reply targets, email composition (pure)
+  lib/time.ts         Relative-time formatting off a single fixed reference instant
+  lib/styles.ts       Tones, pills, chips, table and typography tokens
+  components/         Sidebar, Header, Footer, GhostButton, SegmentedControl
+  screens/            One component per screen
+  App.tsx             Screen state and cross-screen navigation
+```
 
-## Bundle contents
+### Routing is derived, not stored
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Five linked lead screens for review` project files (HTML prototypes, assets, components)
+No lead carries an owner. `route()` runs the real rules — track first, then US state
+against the five region tables — every time a record is read, so every owner, region
+pill, region card count, territory colour and email recipient on all five screens comes
+from the same function. Swapping the `LEADS` array in `src/data/leads.ts` re-routes the
+entire console with no other edits.
+
+The rules, in order:
+
+1. **Agent signups** go to the agent network desk. Never region-routed, never treated as
+   financing leads.
+2. **No state captured** → concierge desk, for a person to complete by hand.
+3. **State in a region** → that region's Concierge owner.
+4. **State in no region** → concierge desk for manual triage. Deliberately *not*
+   reassigned to the nearest region.
+
+First-reply target is one hour for homebuyers, three for agents; `sla()` derives
+met / late / breached / due from that.
+
+### Concierge and Account Executive stay separate
+
+Region cards, the territory map and the routing block are Concierge-only. The Account
+Executive assignment sits in its own labelled block on the lead detail screen, with a
+note that AEs are staffed nationally and are not region-routed.
+
+### Display toggles
+
+The prototype exposed two tweaks as design-tool props; both are real controls here:
+
+- **Density** (Comfortable / Compact) — in the Leads filter bar, changes table row padding.
+- **Map fill** (Filled / Outline) — beside the territory grid heading, switches region
+  tiles between solid colour and outline.
+
+## Figures, checked against the design
+
+Everything below is computed from the 24 records, not written down:
+
+- 24 leads — 22 homebuyers, 2 agent signups
+- Handoff emails: 18 sent, 5 queued, 1 failed
+- 2 replies overdue, 11 awaiting a first reply, 2 with no owner assigned
+- 5 regions covering 34 states and DC; **16 states uncovered**, hatched on the map
+- Region load A=4, B=4, C=5, D=4, E=3
+- `GHS-2041` (Yusuf Karim, Reston VA) is the showcase record: a 14-turn transcript in
+  which the assistant declines a Social Security number, flagged as a policy turn
+
+## Design source
+
+The original handoff bundle is preserved:
+
+- `project/Guidance Ops Console.dc.html` — the design prototype (template + logic)
+- `project/support.js` — the Claude Design runtime the prototype ran on
+- `chats/chat1.md` — the design conversation, including the two rounds of revisions
+  (removing the Instagram channel, and the first-time-user orientation pass)
